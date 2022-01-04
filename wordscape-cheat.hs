@@ -1,48 +1,40 @@
-import System.IO (readFile)
+import Data.Char (isAlpha)
+import Data.List (subsequences, permutations, sort, group, head)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 import System.Exit (exitSuccess)
-import Data.Char (toLower, isAlpha)
-import Data.List (permutations)
+
 
 type Dictionary = [String]
 
-actualWords :: [String] -> Dictionary -> [String]
-actualWords x y = filter (`elem` y) x
+onlyWords :: [String] -> Dictionary -> [String]
+onlyWords x y = filter (`elem` y) x
 
-
-lowercase :: String -> [Char] 
-lowercase = map toLower
-
-
-onlyLetters :: String -> Bool
-onlyLetters = all isAlpha 
-
+-- TODO: subsequences is not right bc it doesn't do all combinations
+allCombinations :: [a] -> [[a]]
+allCombinations ns = filter ((>2).length) (subsequences ns ++ permutations ns)
 
 possibleWords :: String -> Dictionary -> [String]
-possibleWords x = actualWords (permutations x)
+possibleWords x = onlyWords (allCombinations x)
 
+onlyLetters :: String -> Bool
+onlyLetters = all isAlpha
 
--- check if word is only alphabet, turn to lowercase
-cleanDictionary :: Dictionary -> Dictionary
-cleanDictionary x = filter onlyLetters (map lowercase x)
-
-
-loadDictionary :: String -> Dictionary
-loadDictionary path = do
-    contents <- readFile path
-    cleanDictionary (lines contents)
-
+removeDuplicates :: (Ord a) => [a] -> [a]
+removeDuplicates = map head . group . sort
 
 main :: IO ()
 main = do
     -- loading dictionary 
     let dictPath = "/usr/share/dict/american-english"
-    
-    dictionary <- loadDictionary dictPath
+    text <- TIO.readFile dictPath
+    let dictionary = removeDuplicates $ filter onlyLetters (map T.unpack $ T.lines $ T.toLower text)
 
+    -- process data
     putStrLn "Please type the letters involved (without spaces):"
     givenChars <- getLine
 
-    let inputData = lowercase givenChars
+    let inputData = T.unpack $ T.toLower $ T.pack givenChars
 
     if length inputData < 3
 
