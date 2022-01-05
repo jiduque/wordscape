@@ -1,19 +1,19 @@
 import Data.Char (isAlpha)
-import Data.List (subsequences, permutations, sort, group, head)
+import Data.List (sort, group, head)
+import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import System.Exit (exitSuccess)
-import System.Environment
+import System.Environment (getArgs)
 
 
-type Dictionary = [String]
+type Dictionary = S.Set String
 
 onlyWords :: [String] -> Dictionary -> [String]
-onlyWords x y = filter (`elem` y) x
+onlyWords xs y = filter (`S.member` y) xs
 
 removeDuplicates :: (Ord a) => [a] -> [a]
 removeDuplicates = map head . group . sort
-
 
 cartesianProduct :: Int -> [a] -> [[a]]
 cartesianProduct k xs   | k == 2       = [[x, y] | x <- xs, y <- xs]
@@ -21,13 +21,11 @@ cartesianProduct k xs   | k == 2       = [[x, y] | x <- xs, y <- xs]
                         | k > 3        = [ x:y |  x <- xs, y <- cartesianProduct (k-1) xs] ++ cartesianProduct (k-1) xs
                         | otherwise    = [[]]
 
-
 counter :: String -> [Int]
 counter xs = map (\c -> length $ filter (== c) xs) ['a'..'z']
 
 validishString :: [Int] -> [Int] -> Bool
 validishString xs ys = all (uncurry (>=)) (zip xs ys)
-
 
 allCombinations :: String -> [String]
 allCombinations xs = do
@@ -35,10 +33,8 @@ allCombinations xs = do
     let wordVec = counter xs
     filter (validishString wordVec . counter) (removeDuplicates $ cartesianProduct k xs)
 
-
 possibleWords :: String -> Dictionary -> [String]
 possibleWords x = onlyWords (allCombinations x)
-
 
 onlyLetters :: String -> Bool
 onlyLetters = all isAlpha
@@ -49,10 +45,11 @@ main = do
     -- loading dictionary 
     let dictPath = "/usr/share/dict/american-english"
     text <- TIO.readFile dictPath
-    let dictionary = removeDuplicates $ filter onlyLetters (map T.unpack $ T.lines $ T.toLower text)
+    let dictionary = S.fromAscList $ removeDuplicates $ filter onlyLetters (map T.unpack $ T.lines $ T.toLower text)
 
     -- process data
-    [givenChars] <- getArgs
+    putStrLn "Please type the letters involved (without spaces):"
+    givenChars <- getLine 
     let inputData = T.unpack $ T.toLower $ T.pack givenChars
 
     if length inputData < 3
