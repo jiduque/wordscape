@@ -3,6 +3,7 @@ import Data.List (subsequences, permutations, sort, group, head)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import System.Exit (exitSuccess)
+import System.Environment
 
 
 type Dictionary = [String]
@@ -10,18 +11,38 @@ type Dictionary = [String]
 onlyWords :: [String] -> Dictionary -> [String]
 onlyWords x y = filter (`elem` y) x
 
--- TODO: subsequences is not right bc it doesn't do all combinations
-allCombinations :: [a] -> [[a]]
-allCombinations ns = filter ((>2).length) (subsequences ns ++ permutations ns)
+removeDuplicates :: (Ord a) => [a] -> [a]
+removeDuplicates = map head . group . sort
+
+
+cartesianProduct :: Int -> [a] -> [[a]]
+cartesianProduct k xs   | k == 2       = [[x, y] | x <- xs, y <- xs]
+                        | k == 3       = [x:y |  x <- xs, y <- cartesianProduct (k-1) xs]
+                        | k > 3        = [ x:y |  x <- xs, y <- cartesianProduct (k-1) xs] ++ cartesianProduct (k-1) xs
+                        | otherwise    = [[]]
+
+
+counter :: String -> [Int]
+counter xs = map (\c -> length $ filter (== c) xs) ['a'..'z']
+
+validishString :: [Int] -> [Int] -> Bool
+validishString xs ys = all (uncurry (>=)) (zip xs ys)
+
+
+allCombinations :: String -> [String]
+allCombinations xs = do
+    let k = length xs
+    let wordVec = counter xs
+    filter (validishString wordVec . counter) (removeDuplicates $ cartesianProduct k xs)
+
 
 possibleWords :: String -> Dictionary -> [String]
 possibleWords x = onlyWords (allCombinations x)
 
+
 onlyLetters :: String -> Bool
 onlyLetters = all isAlpha
 
-removeDuplicates :: (Ord a) => [a] -> [a]
-removeDuplicates = map head . group . sort
 
 main :: IO ()
 main = do
@@ -31,9 +52,7 @@ main = do
     let dictionary = removeDuplicates $ filter onlyLetters (map T.unpack $ T.lines $ T.toLower text)
 
     -- process data
-    putStrLn "Please type the letters involved (without spaces):"
-    givenChars <- getLine
-
+    [givenChars] <- getArgs
     let inputData = T.unpack $ T.toLower $ T.pack givenChars
 
     if length inputData < 3
@@ -47,6 +66,6 @@ main = do
             let numSols = length solutions
             let header = "There are " ++ show numSols ++ " possible solutions: "
 
-            putStrLn (replicate (length header) '=')
             putStrLn header
+            putStrLn (replicate (length header) '=')
             mapM_ putStrLn solutions
