@@ -8,8 +8,10 @@ import System.Environment (getArgs)
 
 
 type Dictionary = S.Set String
+type LetterPermutations = [String]
+type Words = [String]
 
-onlyWords :: [String] -> Dictionary -> [String]
+onlyWords :: LetterPermutations -> Dictionary -> Words
 onlyWords xs y = filter (`S.member` y) xs
 
 removeDuplicates :: (Ord a) => [a] -> [a]
@@ -27,13 +29,13 @@ counter xs = map (\c -> length $ filter (== c) xs) ['a'..'z']
 validishString :: [Int] -> [Int] -> Bool
 validishString xs ys = all (uncurry (>=)) (zip xs ys)
 
-allCombinations :: String -> [String]
+allCombinations :: String -> LetterPermutations
 allCombinations xs = do
     let k = length xs
     let wordVec = counter xs
-    filter (validishString wordVec . counter) (removeDuplicates $ cartesianProduct k xs)
+    removeDuplicates $ filter (validishString wordVec . counter) $ cartesianProduct k (sort xs)
 
-possibleWords :: String -> Dictionary -> [String]
+possibleWords :: String -> Dictionary -> Words
 possibleWords x = onlyWords (allCombinations x)
 
 onlyLetters :: String -> Bool
@@ -46,7 +48,7 @@ main = do
     let dictPath = "/usr/share/dict/american-english"
     text <- TIO.readFile dictPath
     let dictionary = S.fromAscList $ removeDuplicates $ filter onlyLetters (map T.unpack $ T.lines $ T.toLower text)
-
+    
     -- process data
     putStrLn "Please type the letters involved (without spaces):"
     givenChars <- getLine 
