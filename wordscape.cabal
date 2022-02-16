@@ -1,0 +1,28 @@
+cabal-version:      2.4
+name:               wordscape
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+author:             Jorge Duque
+maintainer:         jor.duqu@gmail.com
+
+
+executable wordscape
+    main-is:          Main.hs
+
+    -- Modules included in this executable, other than Main.
+    other-modules:   
+        Wordscape
+
+    build-depends:    
+        base ^>=4.14.3.0,
+        text >=1.2 && <1.3,
+        containers,
+        optparse-applicative >=0.14 && <0.17
+    hs-source-dirs:   app
+    default-language: Haskell2010
